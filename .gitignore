@@ -2,4 +2,4 @@
 .env
 
 # Models folder
-/models
+/models*
