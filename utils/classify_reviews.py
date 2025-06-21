@@ -30,6 +30,7 @@ def get_reviews_from_db(client):
   return list(reviews)
 
 def classify_reviews(reviews):
+  # todo : place outside
   classifier = pipeline("text-classification", model="Jyokim/camembert-wedder-nps-classifier", tokenizer="Jyokim/camembert-wedder-nps-classifier")
   
   classified_reviews = []
