@@ -67,11 +67,13 @@ dependencies:
   - ipykernel=6.29.5=pyh57ce528_0
   - ipython=9.3.0=pyhfa0c392_0
   - ipython_pygments_lexers=1.1.1=pyhd8ed1ab_0
+  - ipywidgets=8.1.7=pyhd8ed1ab_0
   - jedi=0.19.2=pyhd8ed1ab_1
   - jinja2=3.1.6=pyhd8ed1ab_0
   - joblib=1.5.1=pyhd8ed1ab_0
   - jupyter_client=8.6.3=pyhd8ed1ab_1
   - jupyter_core=5.8.1=pyh31011fe_0
+  - jupyterlab_widgets=3.0.15=pyhd8ed1ab_0
   - kiwisolver=1.4.7=py313hf9c7212_0
   - krb5=1.21.3=h237132a_0
   - lcms2=2.17=h7eeda09_0
@@ -115,6 +117,7 @@ dependencies:
   - libpng=1.6.49=h3783ad8_0
   - libprotobuf=5.29.3=hccd9074_1
   - libre2-11=2024.07.02=hd41c47c_3
+  - libsentencepiece=0.2.0=h98efcbe_11
   - libsodium=1.0.20=h99b78c6_0
   - libsqlite=3.50.1=h3f77e49_0
   - libssh2=1.11.1=h1590b86_0
@@ -160,6 +163,7 @@ dependencies:
   - prometheus-cpp=1.3.0=h0967b3e_0
   - prompt-toolkit=3.0.51=pyha770c72_0
   - propcache=0.3.1=py313ha9b7d5b_0
+  - protobuf=5.29.3=py313hfa7305b_0
   - psutil=7.0.0=py313h90d716c_0
   - pthread-stubs=0.4=hd74edd7_1002
   - ptyprocess=0.7.0=pyhd8ed1ab_1
@@ -191,6 +195,9 @@ dependencies:
   - safetensors=0.5.3=py313hdde674f_0
   - scikit-learn=1.7.0=py313hecba28c_1
   - scipy=1.15.2=py313h9a24e0a_0
+  - sentencepiece=0.2.0=h182aed9_11
+  - sentencepiece-python=0.2.0=py313hd2a7d4c_11
+  - sentencepiece-spm=0.2.0=h98efcbe_11
   - setuptools=80.9.0=pyhff2d567_0
   - six=1.17.0=pyhd8ed1ab_0
   - sleef=3.8=h8391f65_0
@@ -210,6 +217,7 @@ dependencies:
   - tzdata=2025b=h78e105d_0
   - urllib3=2.5.0=pyhd8ed1ab_0
   - wcwidth=0.2.13=pyhd8ed1ab_1
+  - widgetsnbextension=4.0.14=pyhd8ed1ab_0
   - xorg-libxau=1.0.12=h5505292_0
   - xorg-libxdmcp=1.1.5=hd74edd7_0
   - xxhash=0.8.3=haa4e116_0
