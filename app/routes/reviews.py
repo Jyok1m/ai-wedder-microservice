@@ -220,7 +220,7 @@ def updateReviews():
 
         {full_summary}
 
-        1. Fais un résumé de chaque traiteur en te basant sur les résumés intermédiaires des avis.
+        1. Fais un résumé de chaque traiteur en analysant les résumés intermédiaires des avis.
         2. Analyse et fais une synthèse des points majeurs évoqués (forces, faiblesses, répétitions...).
         3. Attribue un score global subjectif sur 100 basé sur la qualité perçue.
 
