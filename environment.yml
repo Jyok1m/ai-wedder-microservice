@@ -39,6 +39,7 @@ dependencies:
   - certifi=2025.6.15=pyhd8ed1ab_0
   - cffi=1.17.1=py313hc845a76_0
   - charset-normalizer=3.4.2=pyhd8ed1ab_0
+  - click=8.2.1=pyh707e725_0
   - colorama=0.4.6=pyhd8ed1ab_1
   - comm=0.2.2=pyhd8ed1ab_1
   - contourpy=1.3.2=py313h0ebd0e5_0
@@ -50,8 +51,12 @@ dependencies:
   - dill=0.3.8=pyhd8ed1ab_0
   - distro=1.9.0=pyhd8ed1ab_1
   - dnspython=2.7.0=pyhff2d567_1
+  - email-validator=2.2.0=pyhd8ed1ab_1
+  - email_validator=2.2.0=hd8ed1ab_1
   - exceptiongroup=1.3.0=pyhd8ed1ab_0
   - executing=2.2.0=pyhd8ed1ab_0
+  - fastapi=0.115.14=pyhe01879c_0
+  - fastapi-cli=0.0.7=pyhd8ed1ab_0
   - filelock=3.18.0=pyhd8ed1ab_0
   - fonttools=4.58.4=py313ha9b7d5b_0
   - freetype=2.13.3=hce30654_1
@@ -65,6 +70,7 @@ dependencies:
   - h2=4.2.0=pyhd8ed1ab_0
   - hpack=4.1.0=pyhd8ed1ab_0
   - httpcore=1.0.9=pyh29332c3_0
+  - httptools=0.6.4=py313h90d716c_0
   - httpx=0.28.1=pyhd8ed1ab_0
   - huggingface_hub=0.31.4=pyhd8ed1ab_0
   - hyperframe=6.1.0=pyhd8ed1ab_0
@@ -139,10 +145,12 @@ dependencies:
   - libzlib=1.3.1=h8359307_2
   - llvm-openmp=20.1.7=hdb05f8b_0
   - lz4-c=1.10.0=h286801f_1
+  - markdown-it-py=3.0.0=pyhd8ed1ab_1
   - markupsafe=3.0.2=py313ha9b7d5b_1
   - matplotlib=3.10.3=py313h39782a4_0
   - matplotlib-base=3.10.3=py313haaf02c0_0
   - matplotlib-inline=0.1.7=pyhd8ed1ab_1
+  - mdurl=0.1.2=pyhd8ed1ab_1
   - mpc=1.3.1=h8f1351a_1
   - mpfr=4.2.1=hb693164_3
   - mpmath=1.3.0=pyhd8ed1ab_1
@@ -189,7 +197,8 @@ dependencies:
   - pysocks=1.7.1=pyha55dd90_7
   - python=3.13.5=hf3f3da0_102_cp313
   - python-dateutil=2.9.0.post0=pyhff2d567_1
-  - python-dotenv=1.1.0=pyh29332c3_1
+  - python-dotenv=1.1.1=pyhe01879c_0
+  - python-multipart=0.0.20=pyhff2d567_0
   - python-tzdata=2025.2=pyhd8ed1ab_0
   - python-xxhash=3.5.0=py313h90d716c_2
   - python_abi=3.13=7_cp313
@@ -202,6 +211,8 @@ dependencies:
   - readline=8.2=h1d1bf99_2
   - regex=2024.11.6=py313h90d716c_0
   - requests=2.32.4=pyhd8ed1ab_0
+  - rich=14.0.0=pyh29332c3_0
+  - rich-toolkit=0.11.3=pyh29332c3_0
   - safetensors=0.5.3=py313hdde674f_0
   - scikit-learn=1.7.0=py313hecba28c_1
   - scipy=1.15.2=py313h9a24e0a_0
@@ -209,11 +220,13 @@ dependencies:
   - sentencepiece-python=0.2.0=py313hd2a7d4c_11
   - sentencepiece-spm=0.2.0=h98efcbe_11
   - setuptools=80.9.0=pyhff2d567_0
+  - shellingham=1.5.4=pyhd8ed1ab_1
   - six=1.17.0=pyhd8ed1ab_0
   - sleef=3.8=h8391f65_0
   - snappy=1.2.1=h98b9ce2_1
   - sniffio=1.3.1=pyhd8ed1ab_1
   - stack_data=0.6.3=pyhd8ed1ab_1
+  - starlette=0.46.2=pyh81abbef_0
   - sympy=1.14.0=pyh2585a3b_105
   - threadpoolctl=3.6.0=pyhecae5ae_0
   - tk=8.6.13=h892fb3f_2
@@ -222,12 +235,20 @@ dependencies:
   - tqdm=4.67.1=pyhd8ed1ab_1
   - traitlets=5.14.3=pyhd8ed1ab_1
   - transformers=4.52.4=pyhd8ed1ab_0
+  - typer=0.16.0=pyh167b9f4_0
+  - typer-slim=0.16.0=pyhe01879c_0
+  - typer-slim-standard=0.16.0=hf964461_0
   - typing-extensions=4.14.0=h32cad80_0
   - typing-inspection=0.4.1=pyhd8ed1ab_0
   - typing_extensions=4.14.0=pyhe01879c_0
   - tzdata=2025b=h78e105d_0
   - urllib3=2.5.0=pyhd8ed1ab_0
+  - uvicorn=0.34.3=pyh31011fe_0
+  - uvicorn-standard=0.34.3=h31011fe_0
+  - uvloop=0.21.0=py313h63a2874_1
+  - watchfiles=1.1.0=py313hdde674f_0
   - wcwidth=0.2.13=pyhd8ed1ab_1
+  - websockets=15.0.1=py313h90d716c_0
   - widgetsnbextension=4.0.14=pyhd8ed1ab_0
   - xorg-libxau=1.0.12=h5505292_0
   - xorg-libxdmcp=1.1.5=hd74edd7_0
