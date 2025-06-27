@@ -4,28 +4,31 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from bson import ObjectId
 
+
 def connect_to_db():
-  load_dotenv()
-  MONGODB_URI = os.getenv("MONGODB_URI")
-  client = MongoClient(MONGODB_URI)
-  
-  if client is not None:
-    print("Connected to DB")
-    return client
-  else:
-    print("Failed to connect to DB")
-    return None
+    load_dotenv()
+    MONGODB_URI = os.getenv("MONGODB_URI")
+    client = MongoClient(MONGODB_URI)
+
+    if client is not None:
+        print("Connected to DB")
+        return client
+    else:
+        print("Failed to connect to DB")
+        return None
+
 
 def load_summaries_from_file(path="microservice/data/catering_reviews_summary.json"):
-  try:
-      with open(path, "r", encoding="utf-8") as f:
-          data = json.load(f)
-      print(f"✅ Loaded {len(data)} summaries from {path}")
-      return data
-  except Exception as e:
-      print(f"❌ Error loading file: {e}")
-      return []
-  
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        print(f"✅ Loaded {len(data)} summaries from {path}")
+        return data
+    except Exception as e:
+        print(f"❌ Error loading file: {e}")
+        return []
+
+
 def save_summaries_to_db(client, summaries):
     if client is None:
         return
@@ -58,6 +61,7 @@ def save_summaries_to_db(client, summaries):
             print(f"✅ Updated venue {venue_id}")
         else:
             print(f"⚠️ No update for venue {venue_id}")
+
 
 if __name__ == "__main__":
     client = connect_to_db()

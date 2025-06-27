@@ -30,6 +30,7 @@ dependencies:
   - azure-storage-blobs-cpp=12.13.0=h7585a09_1
   - azure-storage-common-cpp=12.8.0=h9ca1f76_1
   - azure-storage-files-datalake-cpp=12.12.0=hcdd55da_1
+  - black=25.1.0=pyh866005b_0
   - brotli=1.1.0=h5505292_3
   - brotli-bin=1.1.0=h5505292_3
   - brotli-python=1.1.0=py313h928ef07_3
@@ -157,6 +158,7 @@ dependencies:
   - multidict=6.5.0=py313h6347b5a_0
   - multiprocess=0.70.16=py313h20a7fcf_1
   - munkres=1.1.4=pyhd8ed1ab_1
+  - mypy_extensions=1.1.0=pyha770c72_0
   - ncurses=6.5=h5e97a16_3
   - nest-asyncio=1.6.0=pyhd8ed1ab_1
   - networkx=3.5=pyhe01879c_0
@@ -171,6 +173,7 @@ dependencies:
   - packaging=25.0=pyh29332c3_1
   - pandas=2.3.0=py313h668b085_0
   - parso=0.8.4=pyhd8ed1ab_1
+  - pathspec=0.12.1=pyhd8ed1ab_1
   - pexpect=4.9.0=pyhd8ed1ab_1
   - pickleshare=0.7.5=pyhd8ed1ab_1004
   - pillow=11.2.1=py313hb37fac4_0
