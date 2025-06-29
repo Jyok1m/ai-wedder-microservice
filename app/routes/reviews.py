@@ -100,83 +100,83 @@ def batch_reviews(reviews, batch_size=10):
 @router.post("/summarize")
 def updateReviews():
     def event_stream():
-        reviews = list(db["reviews"].find({}, {"_id": 1, "text": 1}))
-        yield f"🔍 {len(reviews)} reviews trouvés\n"
+        # reviews = list(db["reviews"].find({}, {"_id": 1, "text": 1}))
+        # yield f"🔍 {len(reviews)} reviews trouvés\n"
 
-        # ------------------------------------------------------------------ #
-        #           Étape 1 : Classification et Clustering des avis          #
-        # ------------------------------------------------------------------ #
+        # # ------------------------------------------------------------------ #
+        # #           Étape 1 : Classification et Clustering des avis          #
+        # # ------------------------------------------------------------------ #
         
-        # We retrieve a sample of reviews to clusterize them
-        df_sample = pd.DataFrame(reviews).sample(n=170, random_state=42).reset_index(drop=True) # Sample for clustering
-        reviews_for_clustering_prompt = get_reviews_for_clustering_prompt(df_sample)
-        clustering_prompt = get_clustering_prompt(reviews_for_clustering_prompt)
+        # # We retrieve a sample of reviews to clusterize them
+        # df_sample = pd.DataFrame(reviews).sample(n=170, random_state=42).reset_index(drop=True) # Sample for clustering
+        # reviews_for_clustering_prompt = get_reviews_for_clustering_prompt(df_sample)
+        # clustering_prompt = get_clustering_prompt(reviews_for_clustering_prompt)
 
-        suggested_labels = []
+        # suggested_labels = []
 
-        raw_labels = gpt_model(clustering_prompt)
-        try:
-            suggested_labels = ast.literal_eval(raw_labels)
-            assert isinstance(suggested_labels, list)
-        except Exception as e:
-            yield f"Erreur de parsing des labels : {e}\n{raw_labels}\n"
-            suggested_labels = []
+        # raw_labels = gpt_model(clustering_prompt)
+        # try:
+        #     suggested_labels = ast.literal_eval(raw_labels)
+        #     assert isinstance(suggested_labels, list)
+        # except Exception as e:
+        #     yield f"Erreur de parsing des labels : {e}\n{raw_labels}\n"
+        #     suggested_labels = []
 
-        if not suggested_labels:
-            raise ValueError("Aucune étiquette suggérée. Impossible de continuer le clustering.")
-        else:
-            yield f"Labels de clustering récupérés : {suggested_labels}\n"
+        # if not suggested_labels:
+        #     raise ValueError("Aucune étiquette suggérée. Impossible de continuer le clustering.")
+        # else:
+        #     yield f"Labels de clustering récupérés : {suggested_labels}\n"
 
-        for idx, review in enumerate(reviews):
-            text = review.get("text", "")
+        # for idx, review in enumerate(reviews):
+        #     text = review.get("text", "")
 
-            if not text:
-                continue
+        #     if not text:
+        #         continue
 
-            # ------------------------- Classification ------------------------- #
+        #     # ------------------------- Classification ------------------------- #
             
-            """
-            The first step is to classify each review with a sentiment analysis model.
-            Here, we use the classifier I built with Camembert. 
-            I have trained it and push it on Hugging Face so that it can be used in production.
-            The classifier is a simple text classification model that predicts the sentiment of each review.
-            It is a French model that predicts the sentiment of the review as either "positive", "negative" or "neutral".
-            """
+        #     """
+        #     The first step is to classify each review with a sentiment analysis model.
+        #     Here, we use the classifier I built with Camembert. 
+        #     I have trained it and push it on Hugging Face so that it can be used in production.
+        #     The classifier is a simple text classification model that predicts the sentiment of each review.
+        #     It is a French model that predicts the sentiment of the review as either "positive", "negative" or "neutral".
+        #     """
 
-            sentiment = classifier(text)[0]
+        #     sentiment = classifier(text)[0]
 
-            # --------------------------- Clustering --------------------------- #
+        #     # --------------------------- Clustering --------------------------- #
 
-            """
-            The second step is to clusterize the reviews based on their content.
-            For this step, I will use 2 techniques : 
-                1. The first technique is about getting 10 labels based on the overall review tendency.
-                2. The second technique is about using DistilCamembert Zero-Shot to clusterize the reviews based on the labels obtained in the first step.
-            I am basically inducing the labels from the reviews themselves, so that they are more relevant to the dataset and to my specific needs.
-            """
+        #     """
+        #     The second step is to clusterize the reviews based on their content.
+        #     For this step, I will use 2 techniques : 
+        #         1. The first technique is about getting 10 labels based on the overall review tendency.
+        #         2. The second technique is about using DistilCamembert Zero-Shot to clusterize the reviews based on the labels obtained in the first step.
+        #     I am basically inducing the labels from the reviews themselves, so that they are more relevant to the dataset and to my specific needs.
+        #     """
 
-            clusterer_result = clusterer(sequences=text, candidate_labels=suggested_labels, hypothesis_template="Cet avis concerne {}.")
-            ai_clusters = get_ai_clusters(labels=clusterer_result["labels"], scores=clusterer_result["scores"])
+        #     clusterer_result = clusterer(sequences=text, candidate_labels=suggested_labels, hypothesis_template="Cet avis concerne {}.")
+        #     ai_clusters = get_ai_clusters(labels=clusterer_result["labels"], scores=clusterer_result["scores"])
 
-            # --------------------------- Update DB --------------------------- #
+        #     # --------------------------- Update DB --------------------------- #
 
-            """
-            I update the review in the database with the sentiment and the clusters.
-            """
+        #     """
+        #     I update the review in the database with the sentiment and the clusters.
+        #     """
 
-            db["reviews"].update_one(
-                {"_id": review["_id"]},
-                {"$set": {
-                    "aiSentiment": sentiment["label"],
-                    "aiConfidenceScore": sentiment["score"],
-                    "aiClusters": ai_clusters
-                }}
-            )
+        #     db["reviews"].update_one(
+        #         {"_id": review["_id"]},
+        #         {"$set": {
+        #             "aiSentiment": sentiment["label"],
+        #             "aiConfidenceScore": sentiment["score"],
+        #             "aiClusters": ai_clusters
+        #         }}
+        #     )
 
-            yield f"[{idx+1}/{len(reviews)}] Sentiment + clusters enregistrés\n"
-            time.sleep(0.1) # Ici on met une pause pour ne pas surcharger l'API
+        #     yield f"[{idx+1}/{len(reviews)}] Sentiment + clusters enregistrés\n"
+        #     time.sleep(0.1) # Ici on met une pause pour ne pas surcharger l'API
         
-        yield "🔁 Résumés globaux par traiteur...\n"
+        # yield "Résumés globaux par traiteur...\n"
 
         # ------------------------------------------------------------------ #
         #                         Step 2 : Summarize                         #
@@ -188,6 +188,8 @@ def updateReviews():
         The summary will be stored in the database for each catering company.
         I will also use the reviews to generate a global score for each catering company.
         """
+
+        yield "Résumés globaux par traiteur...\n"
 
         catering_with_reviews = get_catering_with_reviews(db["reviews"])
 
@@ -230,14 +232,23 @@ def updateReviews():
 
             {full_summary}
 
-            1. Fais un résumé de chaque traiteur en analysant les résumés intermédiaires des avis.
-            2. Analyse et fais une synthèse des points majeurs évoqués (forces, faiblesses, répétitions...).
+            Ta tâche :
+            1. Fais un résumé synthétique global des avis.
+            2. Analyse et synthétise les points majeurs évoqués (forces, faiblesses, répétitions...).
             3. Attribue un score global subjectif sur 100 basé sur la qualité perçue.
 
-            Donne la réponse structurée comme ceci :
-            Résumé : ...
-            Points clés : ...
-            Score global : ...
+            ⚠️ Le format de sortie **doit être exactement** celui-ci :
+
+            Résumé : [texte ici]
+
+            Points clés : [texte ici]
+
+            Score global : [nombre entre 0 et 100]%
+
+            Exemple valide :
+            Résumé : Ce traiteur est connu pour sa qualité de service et la présentation des plats. Si vous souhaitez un repas raffiné, c'est le traiteur idéal. Cependant, certains ont trouvé les prix un peu élevés par rapport à d'autres traiteurs...
+            Points clés : Les invités ont particulièrement apprécié la qualité du service et la présentation des plats...
+            Score global : 88%
             """
             
             try:
