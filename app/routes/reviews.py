@@ -1,8 +1,10 @@
 import pandas as pd
 import os
 import ast
+import time
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from app.db.mongo import db
 from transformers import pipeline
 from openai import OpenAI
@@ -97,161 +99,172 @@ def batch_reviews(reviews, batch_size=10):
 
 @router.post("/summarize")
 def updateReviews():
-    reviews = list(db["reviews"].find({}, {"_id": 1, "text": 1}))
+    def event_stream():
+        reviews = list(db["reviews"].find({}, {"_id": 1, "text": 1}))
+        yield f"🔍 {len(reviews)} reviews trouvés\n"
 
-    # ------------------------------------------------------------------ #
-    #           Étape 1 : Classification et Clustering des avis          #
-    # ------------------------------------------------------------------ #
-    
-    # We retrieve a sample of reviews to clusterize them
-    df_sample = pd.DataFrame(reviews).sample(n=170, random_state=42).reset_index(drop=True) # Sample for clustering
-    reviews_for_clustering_prompt = get_reviews_for_clustering_prompt(df_sample)
-    clustering_prompt = get_clustering_prompt(reviews_for_clustering_prompt)
+        # ------------------------------------------------------------------ #
+        #           Étape 1 : Classification et Clustering des avis          #
+        # ------------------------------------------------------------------ #
+        
+        # We retrieve a sample of reviews to clusterize them
+        df_sample = pd.DataFrame(reviews).sample(n=170, random_state=42).reset_index(drop=True) # Sample for clustering
+        reviews_for_clustering_prompt = get_reviews_for_clustering_prompt(df_sample)
+        clustering_prompt = get_clustering_prompt(reviews_for_clustering_prompt)
 
-    suggested_labels = []
-
-    raw_labels = gpt_model(clustering_prompt)
-    try:
-        suggested_labels = ast.literal_eval(raw_labels)
-        assert isinstance(suggested_labels, list)
-    except Exception as e:
-        print(f"Erreur parsing des labels : {e}\nRéponse GPT : {raw_labels}")
         suggested_labels = []
 
-    if not suggested_labels:
-        raise ValueError("Aucune étiquette suggérée. Impossible de continuer le clustering.")
+        raw_labels = gpt_model(clustering_prompt)
+        try:
+            suggested_labels = ast.literal_eval(raw_labels)
+            assert isinstance(suggested_labels, list)
+        except Exception as e:
+            yield f"Erreur de parsing des labels : {e}\n{raw_labels}\n"
+            suggested_labels = []
 
-    for _, review in enumerate(reviews):
-        text = review.get("text", "")
+        if not suggested_labels:
+            raise ValueError("Aucune étiquette suggérée. Impossible de continuer le clustering.")
+        else:
+            yield f"Labels de clustering récupérés : {suggested_labels}\n"
 
-        if not text:
-            continue
+        for idx, review in enumerate(reviews):
+            text = review.get("text", "")
 
-        # ------------------------- Classification ------------------------- #
-        
-        """
-        The first step is to classify each review with a sentiment analysis model.
-        Here, we use the classifier I built with Camembert. 
-        I have trained it and push it on Hugging Face so that it can be used in production.
-        The classifier is a simple text classification model that predicts the sentiment of each review.
-        It is a French model that predicts the sentiment of the review as either "positive", "negative" or "neutral".
-        """
-
-        sentiment = classifier(text)[0]
-
-        # --------------------------- Clustering --------------------------- #
-
-        """
-        The second step is to clusterize the reviews based on their content.
-        For this step, I will use 2 techniques : 
-            1. The first technique is about getting 10 labels based on the overall review tendency.
-            2. The second technique is about using DistilCamembert Zero-Shot to clusterize the reviews based on the labels obtained in the first step.
-        I am basically inducing the labels from the reviews themselves, so that they are more relevant to the dataset and to my specific needs.
-        """
-
-        clusterer_result = clusterer(sequences=text, candidate_labels=suggested_labels, hypothesis_template="Cet avis concerne {}.")
-        ai_clusters = get_ai_clusters(labels=clusterer_result["labels"], scores=clusterer_result["scores"])
-
-        # --------------------------- Update DB --------------------------- #
-
-        """
-        I update the review in the database with the sentiment and the clusters.
-        """
-
-        db["reviews"].update_one(
-            {"_id": review["_id"]},
-            {"$set": {
-                "aiSentiment": sentiment["label"],
-                "aiConfidenceScore": sentiment["score"],
-                "aiClusters": ai_clusters
-            }}
-        )
-    
-
-    # ------------------------------------------------------------------ #
-    #                         Step 2 : Summarize                         #
-    # ------------------------------------------------------------------ #
-
-    """
-    In this step, I will summarize the reviews for each catering company.
-    I will use the OpenAI GPT model to summarize the reviews.
-    The summary will be stored in the database for each catering company.
-    I will also use the reviews to generate a global score for each catering company.
-    """
-
-    catering_with_reviews = get_catering_with_reviews(db["reviews"])
-
-    for _, entry in enumerate(tqdm(catering_with_reviews, desc="Processing catering companies")):
-        name = entry["cateringCompanyName"]
-        reviews = entry["reviews"]
-
-        summaries = []
-
-        # Batch processing of reviews to avoid hitting token limits
-        for batch in batch_reviews(reviews):
-            batch_text = ""
-
-            for r in batch:
-                review_ai_clusters = ", ".join([c["label"] for c in r.get("aiClusters", [])])
-                if r.get("text"):
-                    batch_text += f"\n\n [AVIS] {r['text']} [CLUSTERS] {review_ai_clusters}"
-
-            batch_prompt = f"""
-            Tu es un assistant d'analyse d'avis pour des traiteurs de mariage.
-
-            Voici un extrait d'avis avec les thèmes principaux de chaque avis pour le traiteur **{name}** :
-
-            {batch_text}
-
-            Résume les points importants en quelques phrases.
-            """
-            try:
-                summaries.append(gpt_model(batch_prompt))
-            except Exception as e:
-                print(f"Erreur GPT batch pour {name}: {e}")
+            if not text:
                 continue
 
-        full_summary = "\n\n".join(summaries)
+            # ------------------------- Classification ------------------------- #
+            
+            """
+            The first step is to classify each review with a sentiment analysis model.
+            Here, we use the classifier I built with Camembert. 
+            I have trained it and push it on Hugging Face so that it can be used in production.
+            The classifier is a simple text classification model that predicts the sentiment of each review.
+            It is a French model that predicts the sentiment of the review as either "positive", "negative" or "neutral".
+            """
 
-        final_prompt = f"""
-        Tu es un assistant d'analyse d'avis pour des traiteurs de mariage.
+            sentiment = classifier(text)[0]
 
-        Voici les résumés intermédiaires des avis pour le traiteur **{name}** :
+            # --------------------------- Clustering --------------------------- #
 
-        {full_summary}
+            """
+            The second step is to clusterize the reviews based on their content.
+            For this step, I will use 2 techniques : 
+                1. The first technique is about getting 10 labels based on the overall review tendency.
+                2. The second technique is about using DistilCamembert Zero-Shot to clusterize the reviews based on the labels obtained in the first step.
+            I am basically inducing the labels from the reviews themselves, so that they are more relevant to the dataset and to my specific needs.
+            """
 
-        1. Fais un résumé de chaque traiteur en analysant les résumés intermédiaires des avis.
-        2. Analyse et fais une synthèse des points majeurs évoqués (forces, faiblesses, répétitions...).
-        3. Attribue un score global subjectif sur 100 basé sur la qualité perçue.
+            clusterer_result = clusterer(sequences=text, candidate_labels=suggested_labels, hypothesis_template="Cet avis concerne {}.")
+            ai_clusters = get_ai_clusters(labels=clusterer_result["labels"], scores=clusterer_result["scores"])
 
-        Donne la réponse structurée comme ceci :
-        Résumé : ...
-        Points clés : ...
-        Score global : ...
-        """
+            # --------------------------- Update DB --------------------------- #
+
+            """
+            I update the review in the database with the sentiment and the clusters.
+            """
+
+            db["reviews"].update_one(
+                {"_id": review["_id"]},
+                {"$set": {
+                    "aiSentiment": sentiment["label"],
+                    "aiConfidenceScore": sentiment["score"],
+                    "aiClusters": ai_clusters
+                }}
+            )
+
+            yield f"[{idx+1}/{len(reviews)}] Sentiment + clusters enregistrés\n"
+            time.sleep(0.1) # Ici on met une pause pour ne pas surcharger l'API
         
-        try:
-            result = gpt_model(final_prompt)
-            if "Résumé :" in result and "Points clés :" in result and "Score global :" in result:
-                parts = result.split("Score global :")
-                if len(parts) == 2:
-                    core, score = parts
-                    summary, key_points = core.split("Points clés :", 1)
-                    summary = summary.replace("Résumé :", "", 1).strip() if "Résumé :" in summary else summary.strip()
-                    db["venues"].update_one(
-                        {"_id": entry["cateringCompanyId"]},
-                        {
-                            "$set": {
-                                "aiSummary": summary.strip(),
-                                "aiKeyPoints": key_points.strip(),
-                                "aiGlobalScore": score.strip()
-                            }
-                        }
-                    )
-            else:
-                print(f"⚠️ Résultat inattendu pour {name}: {result}")
-        except Exception as e:
-            print(f"Erreur GPT finale pour {name}: {e}")
-            continue
+        yield "🔁 Résumés globaux par traiteur...\n"
 
-    return {"message": "Classification terminée"}
+        # ------------------------------------------------------------------ #
+        #                         Step 2 : Summarize                         #
+        # ------------------------------------------------------------------ #
+
+        """
+        In this step, I will summarize the reviews for each catering company.
+        I will use the OpenAI GPT model to summarize the reviews.
+        The summary will be stored in the database for each catering company.
+        I will also use the reviews to generate a global score for each catering company.
+        """
+
+        catering_with_reviews = get_catering_with_reviews(db["reviews"])
+
+        for _, entry in enumerate(tqdm(catering_with_reviews, desc="Processing catering companies")):
+            name = entry["cateringCompanyName"]
+            reviews = entry["reviews"]
+
+            summaries = []
+
+            # Batch processing of reviews to avoid hitting token limits
+            for batch in batch_reviews(reviews):
+                batch_text = ""
+
+                for r in batch:
+                    review_ai_clusters = ", ".join([c["label"] for c in r.get("aiClusters", [])])
+                    if r.get("text"):
+                        batch_text += f"\n\n [AVIS] {r['text']} [CLUSTERS] {review_ai_clusters}"
+
+                batch_prompt = f"""
+                Tu es un assistant d'analyse d'avis pour des traiteurs de mariage.
+
+                Voici un extrait d'avis avec les thèmes principaux de chaque avis pour le traiteur **{name}** :
+
+                {batch_text}
+
+                Résume les points importants en quelques phrases.
+                """
+                try:
+                    summaries.append(gpt_model(batch_prompt))
+                except Exception as e:
+                    yield f"Erreur GPT batch pour {name}: {e}"
+                    continue
+
+            full_summary = "\n\n".join(summaries)
+
+            final_prompt = f"""
+            Tu es un assistant d'analyse d'avis pour des traiteurs de mariage.
+
+            Voici les résumés intermédiaires des avis pour le traiteur **{name}** :
+
+            {full_summary}
+
+            1. Fais un résumé de chaque traiteur en analysant les résumés intermédiaires des avis.
+            2. Analyse et fais une synthèse des points majeurs évoqués (forces, faiblesses, répétitions...).
+            3. Attribue un score global subjectif sur 100 basé sur la qualité perçue.
+
+            Donne la réponse structurée comme ceci :
+            Résumé : ...
+            Points clés : ...
+            Score global : ...
+            """
+            
+            try:
+                result = gpt_model(final_prompt)
+                if "Résumé :" in result and "Points clés :" in result and "Score global :" in result:
+                    parts = result.split("Score global :")
+                    if len(parts) == 2:
+                        core, score = parts
+                        summary, key_points = core.split("Points clés :", 1)
+                        summary = summary.replace("Résumé :", "", 1).strip() if "Résumé :" in summary else summary.strip()
+                        db["venues"].update_one(
+                            {"_id": entry["cateringCompanyId"]},
+                            {
+                                "$set": {
+                                    "aiSummary": summary.strip(),
+                                    "aiKeyPoints": key_points.strip(),
+                                    "aiGlobalScore": score.strip()
+                                }
+                            }
+                        )
+                        yield f"Résumé pour {name} enregistré\n"
+                else:
+                    yield f"Résultat inattendu pour {name} : {result}\n"
+            except Exception as e:
+                yield f"Aïe ! Erreur GPT pour {name} : {e}\n"
+                continue
+        
+        yield "Traitement terminé.\n"
+
+    return StreamingResponse(event_stream(), media_type="text/plain")
