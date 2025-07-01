@@ -73,9 +73,15 @@ conda activate ai-wedder
 Start the server
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8081 --reload
 # or
 make run
+```
+
+Make the request
+
+```bash
+curl -X POST http://localhost:8081/reviews/summarize
 ```
 
 ---
