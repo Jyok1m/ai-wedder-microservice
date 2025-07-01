@@ -44,6 +44,42 @@ This repository hosts a FastAPI-based microservice that processes customer revie
 
 ---
 
+## Run Locally
+
+Clone the project
+
+```bash
+git clone https://github.com/Jyok1m/ai-wedder-microservice.git
+```
+
+Go to the project directory
+
+```bash
+cd ai-wedder-microservice
+```
+
+Create virtual environnement
+
+```bash
+conda env create -f environment.yml
+```
+
+Activate virtual environnement
+
+```bash
+conda activate ai-wedder
+```
+
+Start the server
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# or
+make run
+```
+
+---
+
 ## 📂 Folder Structure
 
 ```
@@ -64,7 +100,7 @@ This repository hosts a FastAPI-based microservice that processes customer revie
 
 ## 🚸‍♂️ API Endpoint
 
-### `POST /summarize`
+### `POST reviews/summarize`
 
 Triggers the following steps:
 
@@ -83,27 +119,23 @@ Triggers the following steps:
 
 A separate Node.js script is available to **scrape wedding caterers** from [mariages.net](https://www.mariages.net).
 
-This tool is **not part of the Python FastAPI app**, but can be triggered independently.
+This tool is **not part of the Python FastAPI app**, but can be triggered independently via :
 
-### Key Functionality:
+### `POST https://ai-wedder-backend.vercel.app/scraper/mariages-net`
 
-- Navigates across regions: Ille-et-Vilaine, Côtes d'Armor, Basse-Normandie.
-- Extracts:
+Triggers the following steps:
 
-  - Caterer name
-  - Location
-  - Picture
-  - Rating and number of reviews
-  - Individual reviews (author, title, score, aspects)
+1. Navigates across regions: Ille-et-Vilaine, Côtes d'Armor, Basse-Normandie.
+2. Extracts:
 
-- Performs automated scrolling to capture all content.
+- Caterer name
+- Location
+- Picture
+- Rating and number of reviews
+- Individual reviews (author, title, score, aspects)
 
-### Usage:
-
-```js
-const { scrapData } = require("./scraper.js");
-scrapData().then((results) => console.log(results));
-```
+3. Performs automated scrolling to capture all content.
+4. Stores reviews and catering companies to a MongoDB Database.
 
 ---
 
@@ -113,6 +145,9 @@ scrapData().then((results) => console.log(results));
 | ------------ | ---------------------------------- |
 | FastAPI      | API framework                      |
 | MongoDB      | Data persistence                   |
+| ExpressJS    | API scraper                        |
+| NextJS       | Frontend                           |
+| Vercel       | Preview deployments                |
 | Hugging Face | Text classification & clustering   |
 | OpenAI GPT   | Summarization + prompt generation  |
 | Playwright   | Scraping reviews (external module) |
@@ -120,15 +155,18 @@ scrapData().then((results) => console.log(results));
 
 ---
 
-## ⚖️ License
+## 👁‍🗨 Demo Preview
 
-MIT License
+- [Deployed Frontend](https://ai-wedder-frontend.vercel.app)
+- [Deployed Backend](https://ai-wedder-backend.vercel.app)
 
 ---
 
-## ✉️ Author
+## 👁 Repositories
 
-**Joachim Jasmin** - [@jyok1m](https://github.com/jyok1m)
+- [Frontend](https://github.com/Jyok1m/ai-wedder-frontend)
+- [Backend](https://github.com/Jyok1m/ai-wedder-backend)
+- [Microservice](https://github.com/Jyok1m/ai-wedder-microservice)
 
 ---
 
@@ -140,6 +178,12 @@ MIT License
 
 ---
 
-## 👁‍🗨 Demo Preview
+## ✉️ Author
 
-TBD
+**Joachim Jasmin** - [@jyok1m](https://github.com/jyok1m)
+
+---
+
+## ⚖️ License
+
+MIT License
