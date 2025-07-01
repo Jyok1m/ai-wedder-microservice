@@ -1,0 +1,17 @@
+# requirements.txt
+pandas
+pymongo
+matplotlib
+ipykernel
+python-dotenv
+scikit-learn
+accelerate
+datasets
+transformers
+sentencepiece
+ipywidgets
+protobuf
+openai
+fastapi
+uvicorn[standard]
+black

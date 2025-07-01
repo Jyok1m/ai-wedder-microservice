@@ -1,19 +1,23 @@
-FROM continuumio/miniconda3
+# Dockerfile
+FROM python:3.11-slim
 
-# Copier et créer l’environnement
-COPY environment.yml /tmp/environment.yml
-RUN conda env create -n ai-wedder -f /tmp/environment.yml
-
-# Définir le répertoire de travail
+# Crée un utilisateur non-root
+RUN adduser --disabled-password --gecos '' appuser
 WORKDIR /app
+USER appuser
 
-# Copier uniquement les fichiers utiles
+# Copie et installation des dépendances
+COPY requirements.txt .
+RUN pip install --upgrade pip \
+ && pip install -r requirements.txt
+
+# Copie du code de l'app
 COPY app /app/app
 COPY utils /app/utils
 COPY README.md /app/README.md
 
-# Exposer le port HTTP utilisé
+# Expose le port
 EXPOSE 8000
 
-# CMD qui garde uvicorn vivant
-CMD ["conda", "run", "--no-capture-output", "-n", "ai-wedder", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Commande de démarrage
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
