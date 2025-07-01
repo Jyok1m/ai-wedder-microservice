@@ -24,12 +24,13 @@ classifier = pipeline(
 clusterer = pipeline(
     task="zero-shot-classification",
     model="cmarkea/distilcamembert-base-nli",
-    tokenizer="cmarkea/distilcamembert-base-nli"
+    tokenizer="cmarkea/distilcamembert-base-nli",
 )
 
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def gpt_model(prompt, model="gpt-3.5-turbo"): 
+
+def gpt_model(prompt, model="gpt-3.5-turbo"):
     try:
         messages = [{"role": "user", "content": prompt}]
         response = client.chat.completions.create(
@@ -42,6 +43,7 @@ def gpt_model(prompt, model="gpt-3.5-turbo"):
         print(f"❌ GPT API error: {e}")
         return ""
 
+
 def get_clustering_prompt(reviews_as_str):
     return f"""Tu es un expert en traiteurs de mariage. \
     Voici des avis de clients sur des traiteurs de mariage :\n{reviews_as_str}\n \
@@ -50,11 +52,13 @@ def get_clustering_prompt(reviews_as_str):
     Ne donne pas d'explications, juste la liste. \
     """
 
+
 def get_reviews_for_clustering_prompt(review_samples):
     reviews_for_clustering_prompt = ""
     for i, row in review_samples.iterrows():
         reviews_for_clustering_prompt += f"[Avis {i+1}]: {row['text']}\n"
     return reviews_for_clustering_prompt
+
 
 def get_ai_clusters(labels, scores):
     aiClusters = []
@@ -62,40 +66,44 @@ def get_ai_clusters(labels, scores):
         aiClusters.append({"label": label, "score": score})
     return aiClusters
 
+
 def get_catering_with_reviews(db_model):
-    return list(db_model.aggregate([
-        {
-            "$group": {
-                "_id": "$venue",
-                "reviews": {
-                    "$push": {
-                        "text": "$text",
-                        "aiClusters": "$aiClusters"
+    return list(
+        db_model.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": "$venue",
+                        "reviews": {
+                            "$push": {"text": "$text", "aiClusters": "$aiClusters"}
+                        },
                     }
-                }
-            }
-        },
-        {
-            "$lookup": {
-                "from": "venues",
-                "localField": "_id",
-                "foreignField": "_id",
-                "as": "venue_data"
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "cateringCompanyId": {"$first": "$venue_data._id"},
-                "cateringCompanyName": {"$first": "$venue_data.name"},
-                "reviews": 1
-            }
-        }
-    ]))
+                },
+                {
+                    "$lookup": {
+                        "from": "venues",
+                        "localField": "_id",
+                        "foreignField": "_id",
+                        "as": "venue_data",
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "cateringCompanyId": {"$first": "$venue_data._id"},
+                        "cateringCompanyName": {"$first": "$venue_data.name"},
+                        "reviews": 1,
+                    }
+                },
+            ]
+        )
+    )
+
 
 def batch_reviews(reviews, batch_size=10):
     for i in range(0, len(reviews), batch_size):
-        yield reviews[i:i + batch_size]
+        yield reviews[i : i + batch_size]
+
 
 @router.post("/summarize")
 def updateReviews():
@@ -106,9 +114,11 @@ def updateReviews():
         # ------------------------------------------------------------------ #
         #           Étape 1 : Classification et Clustering des avis          #
         # ------------------------------------------------------------------ #
-        
+
         # We retrieve a sample of reviews to clusterize them
-        df_sample = pd.DataFrame(reviews).sample(n=150, random_state=42).reset_index(drop=True) # Sample for clustering
+        df_sample = (
+            pd.DataFrame(reviews).sample(n=150, random_state=42).reset_index(drop=True)
+        )  # Sample for clustering
         reviews_for_clustering_prompt = get_reviews_for_clustering_prompt(df_sample)
         clustering_prompt = get_clustering_prompt(reviews_for_clustering_prompt)
 
@@ -140,7 +150,7 @@ def updateReviews():
                 continue
 
             # ------------------------- Classification ------------------------- #
-            
+
             """
             The first step is to classify each review with a sentiment analysis model.
             Here, we use the classifier I built with Camembert. 
@@ -161,8 +171,14 @@ def updateReviews():
             I am basically inducing the labels from the reviews themselves, so that they are more relevant to the dataset and to my specific needs.
             """
 
-            clusterer_result = clusterer(sequences=text, candidate_labels=suggested_labels, hypothesis_template="Cet avis concerne {}.")
-            ai_clusters = get_ai_clusters(labels=clusterer_result["labels"], scores=clusterer_result["scores"])
+            clusterer_result = clusterer(
+                sequences=text,
+                candidate_labels=suggested_labels,
+                hypothesis_template="Cet avis concerne {}.",
+            )
+            ai_clusters = get_ai_clusters(
+                labels=clusterer_result["labels"], scores=clusterer_result["scores"]
+            )
 
             # --------------------------- Update DB --------------------------- #
 
@@ -172,16 +188,18 @@ def updateReviews():
 
             db["reviews"].update_one(
                 {"_id": review["_id"]},
-                {"$set": {
-                    "aiSentiment": sentiment["label"],
-                    "aiConfidenceScore": sentiment["score"],
-                    "aiClusters": ai_clusters
-                }}
+                {
+                    "$set": {
+                        "aiSentiment": sentiment["label"],
+                        "aiConfidenceScore": sentiment["score"],
+                        "aiClusters": ai_clusters,
+                    }
+                },
             )
 
             yield f"[{idx+1}/{len(reviews)}] Sentiment + clusters enregistrés\n"
-            time.sleep(0.1) # Ici on met une pause pour ne pas surcharger l'API
-        
+            time.sleep(0.1)  # Ici on met une pause pour ne pas surcharger l'API
+
         yield "Résumés globaux par traiteur...\n"
 
         # ------------------------------------------------------------------ #
@@ -197,7 +215,9 @@ def updateReviews():
 
         catering_with_reviews = get_catering_with_reviews(db["reviews"])
 
-        for _, entry in enumerate(tqdm(catering_with_reviews, desc="Processing catering companies")):
+        for _, entry in enumerate(
+            tqdm(catering_with_reviews, desc="Processing catering companies")
+        ):
             name = entry["cateringCompanyName"]
             reviews = entry["reviews"]
 
@@ -208,9 +228,13 @@ def updateReviews():
                 batch_text = ""
 
                 for r in batch:
-                    review_ai_clusters = ", ".join([c["label"] for c in r.get("aiClusters", [])])
+                    review_ai_clusters = ", ".join(
+                        [c["label"] for c in r.get("aiClusters", [])]
+                    )
                     if r.get("text"):
-                        batch_text += f"\n\n [AVIS] {r['text']} [CLUSTERS] {review_ai_clusters}"
+                        batch_text += (
+                            f"\n\n [AVIS] {r['text']} [CLUSTERS] {review_ai_clusters}"
+                        )
 
                 batch_prompt = f"""
                 Tu es un assistant d'analyse d'avis pour des traiteurs de mariage.
@@ -254,24 +278,32 @@ def updateReviews():
             Points clés : Les invités ont particulièrement apprécié la qualité du service et la présentation des plats...
             Score global : 88%
             """
-            
+
             try:
                 result = gpt_model(final_prompt)
-                if "Résumé :" in result and "Points clés :" in result and "Score global :" in result:
+                if (
+                    "Résumé :" in result
+                    and "Points clés :" in result
+                    and "Score global :" in result
+                ):
                     parts = result.split("Score global :")
                     if len(parts) == 2:
                         core, score = parts
                         summary, key_points = core.split("Points clés :", 1)
-                        summary = summary.replace("Résumé :", "", 1).strip() if "Résumé :" in summary else summary.strip()
+                        summary = (
+                            summary.replace("Résumé :", "", 1).strip()
+                            if "Résumé :" in summary
+                            else summary.strip()
+                        )
                         db["venues"].update_one(
                             {"_id": entry["cateringCompanyId"]},
                             {
                                 "$set": {
                                     "aiSummary": summary.strip(),
                                     "aiKeyPoints": key_points.strip(),
-                                    "aiGlobalScore": score.strip()
+                                    "aiGlobalScore": score.strip(),
                                 }
-                            }
+                            },
                         )
                         yield f"Résumé pour {name} enregistré\n"
                 else:
@@ -279,7 +311,7 @@ def updateReviews():
             except Exception as e:
                 yield f"Aïe ! Erreur GPT pour {name} : {e}\n"
                 continue
-        
+
         yield "Traitement terminé.\n"
 
     return StreamingResponse(event_stream(), media_type="text/plain")
