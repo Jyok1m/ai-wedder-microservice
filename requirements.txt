@@ -1,5 +1,5 @@
 fastapi==0.115.14
-uvicorn==0.34.3
+uvicorn[standard]
 pandas==2.3.0
 python-dotenv==1.1.1
 tqdm==4.67.1

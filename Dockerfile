@@ -23,4 +23,4 @@ USER $USER
 EXPOSE 8080
 
 # Lancement FastAPI : "app.main:app" (car le fichier est /app/app/main.py)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
