@@ -11,17 +11,16 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip wheel \
  && pip install --no-cache-dir -r requirements.txt
 
-# Copier uniquement les dossiers/fichiers utiles
+# Copier l'application
 COPY app /app/app
-COPY utils /app/utils
 COPY README.md .
 
-# Donner les bons droits
+# Donner les droits à l'utilisateur non-root
 RUN chown -R $USER:$USER /app
 USER $USER
 
 # Port attendu par Northflank
 EXPOSE 8080
 
-# Lancement FastAPI (prod-ready)
+# Lancement FastAPI : "app.main:app" (car le fichier est /app/app/main.py)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
