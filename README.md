@@ -4,6 +4,15 @@ This repository hosts a FastAPI-based microservice that processes customer revie
 
 ---
 
+## 📖 Preview
+
+![Screenshot](./assets/screenshots/1.png)
+![Screenshot](./assets/screenshots/2.png)
+![Screenshot](./assets/screenshots/3.png)
+![Screenshot](./assets/screenshots/4.png)
+
+---
+
 ## ✨ Key Features
 
 ### 1. **Sentiment Classification**
