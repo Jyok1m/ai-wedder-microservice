@@ -185,6 +185,12 @@ Triggers the following steps:
 
 ---
 
+## ✅ Pitch
+
+- [Pitch](https://docs.google.com/presentation/d/1t1vAkzrNIBS8wMb5Ez3u_OpsSsGjOGXR6EbTFOOcDWI/edit?usp=sharing)
+
+---
+
 ## 🚀 Next Steps
 
 - Deploy to cloud via Render/Northflank
