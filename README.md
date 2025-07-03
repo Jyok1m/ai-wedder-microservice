@@ -23,7 +23,7 @@ This repository hosts a FastAPI-based microservice that processes customer revie
   - Neutral
   - Negative
 
-- Hosted on Hugging Face: `Jyokim/camembert-wedder-nps-classifier`
+- Hosted on Hugging Face: `Jyokim/camembert-wedder-nps-classifier`[https://huggingface.co/Jyokim/camembert-wedder-nps-classifier]
 
 ### 2. **Zero-Shot Clustering**
 
